@@ -6,4 +6,5 @@ trimmed_filename=$(basename $trimmed_url)
 echo "mdkir -p $trimmed_path"
 echo "curl $md_url | pandoc -f html -t markdown | $trimmed_path/$trimmed_filename.md"
 mkdir -p "$trimmed_path"
-wget -O - "$md_url" | pandoc -f html -t markdown | "$trimmed_path/$trimmed_filename.md"
+page_body=$(wget -O - "$md_url")
+echo "$page_body" | pandoc -f html -t markdown | tee -a "$trimmed_path/$trimmed_filename.md"
