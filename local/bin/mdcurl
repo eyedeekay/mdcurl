@@ -1,0 +1,9 @@
+#! /usr/bin/env sh
+md_url="$1"
+trimmed_url=$(echo $md_url | sed 's|http://||' | sed 's|https://||')
+trimmed_path=$(dirname $trimmed_url)
+trimmed_filename=$(basename $trimmed_url)
+echo "mdkir -p $trimmed_path"
+echo "curl $md_url | pandoc -f html -t markdown | $trimmed_path/$trimmed_filename.md"
+mdkir -p "$trimmed_path"
+curl "$md_url" | pandoc -f html -t markdown | "$trimmed_path/$trimmed_filename.md"
