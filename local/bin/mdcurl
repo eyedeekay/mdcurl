@@ -1,10 +1,42 @@
 #! /usr/bin/env sh
 md_url="$1"
+whitelist_dl="$2"
+working_dir="$3"
 trimmed_url=$(echo $md_url | sed 's|http://||' | sed 's|https://||')
 trimmed_path=$(dirname $trimmed_url)
+if [ -z "$whitelist_dl" ]; then
+        whitelist_dl="$trimmed_url"
+fi
+if [ -z "$working_dir" ]; then
+        working_dir=$(pwd)
+fi
 trimmed_filename=$(basename $trimmed_url)
-echo "mdkir -p $trimmed_path"
-echo "curl $md_url | pandoc -f html -t markdown | $trimmed_path/$trimmed_filename.md"
-mkdir -p "$trimmed_path"
-page_body=$(wget -O - "$md_url")
-echo "$page_body" | pandoc -f html -t markdown | tee -a "$trimmed_path/$trimmed_filename.md"
+
+echo "$working_dir/$trimmed_path"
+
+if [ ! -d "$working_dir/$trimmed_path" ]; then
+        mkdir -p "$working_dir/$trimmed_path"
+fi
+page_body=$(curl -s "$md_url")
+
+page_links=$(echo "$page_body" | \
+  grep -o '<a href=['"'"'"][^"'"'"']*['"'"'"]' | \
+  sed -e 's/^<a href=["'"'"']//' -e 's/["'"'"']$//')
+
+if [ $(echo "$page_body" | grep "404") ]; then
+        echo "$page_body" | pandoc -f html -t markdown > "$working_dir/$trimmed_path/$trimmed_filename.md"
+fi
+
+for link in $page_links; do
+        if [ $(echo "$link" | grep "://") ]; then
+                if [ $(echo "$link" | grep "$whitelist_dl") ]; then
+                        mdcurl "$link" "$trimmed_url" #"$working_dir"
+                else
+                        trailing_links="$link"
+                fi
+        else
+                reconstructed_url="https://$trimmed_path/$link"
+                mdcurl "$reconstructed_url" "$trimmed_url" #"$working_dir"
+        fi
+done
+
