@@ -1,0 +1,6 @@
+#! /usr/bin/env sh
+env_1="$MD_URL"
+env_2="$WL_DL"
+env_3="$WK_DIR"
+
+mdcurl "$env_1" "$env_2" "$env_3"
